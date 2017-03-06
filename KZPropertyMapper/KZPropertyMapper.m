@@ -12,7 +12,6 @@
 
 @implementation KZPropertyMapper {
 }
-
 + (BOOL)mapValuesFrom:(id)arrayOrDictionary toInstance:(id)instance usingMapping:(NSDictionary *)parameterMapping
 {
   return [self mapValuesFrom:arrayOrDictionary toInstance:instance usingMapping:parameterMapping errors:nil];
@@ -75,7 +74,7 @@
     } else {
       AssertTrueOrReturnNo(value == nil);
       if (_shouldLogIgnoredValues) {
-        NSLog(@"KZPropertyMapper: Ignoring property %@ as it's not in mapping dictionary", propertyName);
+        NSLog(@"KZPropertyMapper: Ignoring property %@ in type %@ as it's not in mapping dictionary", propertyName, NSStringFromClass([instance class]));
       }
       return YES;
     }
@@ -83,7 +82,7 @@
 
   if (!mapping) {
     if (_shouldLogIgnoredValues) {
-      NSLog(@"KZPropertyMapper: Ignoring value at index %@ as it's not mapped", propertyName);
+      NSLog(@"KZPropertyMapper: Ignoring value at index %@ in type %@ as it's not mapped", propertyName, NSStringFromClass([instance class]));
     }
     return YES;
   }
@@ -174,8 +173,7 @@
     return NO;
   }
 
-  [self mapValue:value toInstance:instance usingStringMapping:descriptor.stringMapping sourceKey:sourceKey];
-  return YES;
+  return [self mapValue:value toInstance:instance usingStringMapping:descriptor.stringMapping sourceKey:sourceKey];
 }
 
 + (BOOL)setValue:(id)value onInstance:(id)instance usingKeyPath:(NSString *)targetKeyPath sourceKey:(NSString *)sourceKey

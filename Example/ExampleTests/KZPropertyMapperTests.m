@@ -124,7 +124,50 @@ SPEC_BEGIN(KZPropertyMapperSpec)
               @"number" : KZCallT(testObject, numberIncrease:forProperty:, number)
           }];
         });
-        
+
+        it(@"should support mapping anonymous protocol dependency", ^{
+          sourceDictionary = @{@"dependency" : TestProtocolCreate(@YES)};
+          [[theBlock(^{
+            testResult = [KZPropertyMapper mapValuesFrom:sourceDictionary
+                                              toInstance:testObject
+                                            usingMapping:@{
+                            @"dependency" : KZPropertyT(testObject, dependency_as_id)
+                         }];
+          }) shouldNot] raise];
+          [[theValue(testResult) should] beTrue];
+          // casting is necessary because of 'Kiwi'
+          [[(NSObject*)testObject.dependency_as_id shouldNot] beNil];
+          [[(NSObject*)testObject.dependency_as_id.value should] equal:@YES];
+        });
+
+        it(@"should support mapping concrete protocol dependency", ^{
+          sourceDictionary = @{@"dependency" : [ConcreteTestProtocol.alloc initWithValue:@YES]};
+          [[theBlock(^{
+            testResult = [KZPropertyMapper mapValuesFrom:sourceDictionary
+                                              toInstance:testObject
+                                            usingMapping:@{
+                            @"dependency" : KZPropertyT(testObject, dependency_as_concrete_type)
+                         }];
+          }) shouldNot] raise];
+          [[theValue(testResult) should] beTrue];
+          // casting is necessary because of 'Kiwi'
+          [[testObject.dependency_as_concrete_type shouldNot] beNil];
+          [[testObject.dependency_as_concrete_type.value should] equal:@YES];
+        });
+
+        it(@"should fail mapping generic object protocol dependency", ^{
+          sourceDictionary = @{@"dependency" : TestProtocolCreate(@YES)};
+          [[theBlock(^{
+            testResult = [KZPropertyMapper mapValuesFrom:sourceDictionary
+                                              toInstance:testObject
+                                            usingMapping:@{
+                            @"dependency" : KZPropertyT(testObject, dependency_as_nsobject)
+                         }];
+          }) should] raise];
+          // "type _TestProtocol does NOT match NSObject<TestProtocol>"
+          [[theValue(testResult) should] beFalse];
+          [[testObject.dependency_as_nsobject should] beNil];
+        });
       });
       
       context(@"when mapping to non-collection object", ^{
@@ -168,6 +211,19 @@ SPEC_BEGIN(KZPropertyMapperSpec)
           }) should] raise];
           [[theValue(testResult) should] beFalse];
           [[testObject.title should] beNil];
+        });
+        
+        it(@"should handle dictionary value when using KZProperty", ^{
+          sourceDictionary = @{@"testValue" : @{@"key" : @"value"}};
+          #ifndef NS_BLOCK_ASSERTIONS
+          [[theBlock(^{
+            testResult = [KZPropertyMapper mapValuesFrom:sourceDictionary toInstance:testObject usingMapping:@{@"testValue": KZPropertyT(testObject, title)}];
+          }) should] raise];
+          #else
+          testResult = [KZPropertyMapper mapValuesFrom:sourceDictionary toInstance:testObject usingMapping:@{@"testValue": KZPropertyT(testObject, title)}];
+          [[theValue(testResult) should] beFalse];
+          [[testObject.title should] beNil];
+          #endif
         });
         
         it(@"should handle array value", ^{
